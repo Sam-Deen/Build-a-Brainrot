@@ -15,7 +15,8 @@ Open the local URL printed by Vite (normally <http://127.0.0.1:5173/>).
 
 ## Docker image
 
-The GitHub Actions workflow **build and push** builds the site and publishes
+The GitHub Actions workflow **build and push** builds the site for `linux/amd64`
+and `linux/arm64`, then publishes both architectures under
 `<Docker Hub username>/dopamine-wall:latest` and a commit-SHA tag on pushes to
 `master` or `main`. It can also be run manually from the Actions tab. Add these
 repository secrets before running it:
@@ -24,6 +25,17 @@ repository secrets before running it:
 - `DOCKERHUB_TOKEN`: a Docker Hub access token with permission to push
 
 Run the published image with `docker run --rm -p 8080:80 <Docker Hub username>/dopamine-wall:latest`, then open <http://localhost:8080/>.
+
+To run the published image with Compose on port 6969, set your Docker Hub
+username in the shell and start the service:
+
+```powershell
+$env:DOCKERHUB_USERNAME = 'your-username'
+docker compose up -d
+```
+
+Open <http://localhost:6969/>. To pull a newer `latest` image later, run
+`docker compose up -d --pull always`.
 
 Click **Fullscreen** to fill the screen. Escape or **Exit** leaves fullscreen. Click **Pop out** in Edge or Chrome to move the wall into a draggable, resizable picture-in-picture window that stays above other windows. Browsers without Document Picture-in-Picture open a regular pop-out window. The page window itself can also be dragged by its top bar.
 

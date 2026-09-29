@@ -1,0 +1,6 @@
+services:
+  web:
+    image: ${DOCKERHUB_USERNAME:?Set DOCKERHUB_USERNAME}/dopamine-wall:latest
+    ports:
+      - "6969:80"
+    restart: unless-stopped
