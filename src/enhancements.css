@@ -65,24 +65,68 @@
   opacity: 0;
 }
 
-.fullscreen-button {
-  height: 32px;
+.fullscreen-presets,
+.fullscreen-overlay {
   display: flex;
   align-items: center;
-  gap: 7px;
-  padding: 0 10px;
+  gap: 3px;
+  padding: 3px;
   border: 1px solid #4b3d57;
   border-radius: 7px;
   background: #2a2233;
+}
+
+.fullscreen-presets > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 5px;
   color: #dac4e7;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
 }
 
-.fullscreen-button:hover {
-  border-color: #9d78b8;
-  background: #362841;
+.fullscreen-presets button,
+.fullscreen-overlay button {
+  min-width: 25px;
+  height: 24px;
+  padding: 0 5px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #b9a8c7;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fullscreen-presets button:hover,
+.fullscreen-overlay button:hover,
+.fullscreen-overlay button.selected {
+  background: #49365d;
+  color: #fff;
+}
+
+.fullscreen-overlay {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: #211827dd;
+  box-shadow: 0 4px 20px #0009;
+}
+
+.fullscreen-overlay .fullscreen-exit {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  border-left: 1px solid #685275;
+  border-radius: 0 4px 4px 0;
+  color: #dac4e7;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .app-window:fullscreen,
@@ -152,6 +196,21 @@
   padding: 0;
 }
 
+.app-window.immersive[data-fullscreen-count="1"] .tile-grid {
+  grid-template-columns: 1fr !important;
+  grid-template-rows: 1fr;
+}
+
+.app-window.immersive[data-fullscreen-count="4"] .tile-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.app-window.immersive[data-fullscreen-count="9"] .tile-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
 .app-window.immersive .tile {
   min-width: 0;
   min-height: 0;
@@ -189,7 +248,7 @@
 }
 
 @media (max-aspect-ratio: 1/1) {
-  .app-window.immersive .tile-grid {
+  .app-window.immersive[data-fullscreen-count="12"] .tile-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     grid-template-rows: repeat(4, minmax(0, 1fr));
   }
@@ -225,12 +284,12 @@
 .cam-badge-live { background: #b92d4ad9; color: white; }
 
 @media (max-width: 900px) {
-  .fullscreen-button span { display: none; }
+  .fullscreen-presets > span { font-size: 0; padding: 0 2px; }
 }
 
 @media (max-width: 650px) {
   .sidebar { height: 172px; }
   .library-search { height: 28px; margin-bottom: 5px; }
   .library-list { flex: none; }
-  .fullscreen-button { padding: 0 8px; }
+  .toolbar-right { flex-wrap: wrap; justify-content: flex-end; }
 }

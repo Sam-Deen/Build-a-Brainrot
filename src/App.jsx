@@ -11,6 +11,7 @@ import { rotations } from './rotations.js';
 import YouTubePlayer from './YouTubePlayer.jsx';
 
 const MAX_TILES = 12;
+const FULLSCREEN_PRESETS = [1, 4, 9, 12];
 const STORAGE_KEY = 'dopamine-wall-v1';
 const initialTiles = ['sand', 'minecraft', 'subway', 'paint', 'otter'].map((id, i) => ({
   uid: `${id}-${i}`, presetId: id,
@@ -24,10 +25,11 @@ function loadSaved() {
         tiles: saved.tiles.filter((tile) => tile && tile.uid && (tile.presetId || tile.custom)).slice(0, MAX_TILES),
         columns: [2, 3, 4].includes(saved.columns) ? saved.columns : 3,
         muted: saved.muted !== false,
+        fullscreenCount: FULLSCREEN_PRESETS.includes(saved.fullscreenCount) ? saved.fullscreenCount : 12,
       };
     }
   } catch { /* ignore corrupt saved settings */ }
-  return { tiles: initialTiles, columns: 3, muted: true };
+  return { tiles: initialTiles, columns: 3, muted: true, fullscreenCount: 12 };
 }
 
 function getSource(tile) {
@@ -207,6 +209,7 @@ function App() {
   const [notice, setNotice] = useState('');
   const [libraryQuery, setLibraryQuery] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenCount, setFullscreenCount] = useState(saved.fullscreenCount);
   const [fullscreenFallback, setFullscreenFallback] = useState(false);
   const dragRef = useRef(null);
   const tileDragRef = useRef(null);
@@ -217,18 +220,18 @@ function App() {
     `${preset.title} ${preset.subtitle} ${preset.category}`.toLowerCase().includes(libraryQuery.trim().toLowerCase())
   );
   const fullscreenTiles = isFullscreen ? [
-    ...tiles,
+    ...tiles.slice(0, fullscreenCount),
     ...presets
       .filter((preset) => !tiles.some((tile) => tile.presetId === preset.id))
-      .slice(0, MAX_TILES - tiles.length)
+      .slice(0, Math.max(0, fullscreenCount - tiles.length))
       .map((preset) => ({ uid: `fullscreen-${preset.id}`, presetId: preset.id })),
   ] : tiles;
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      tiles: tiles.filter((tile) => !tile.custom?.temporary), columns, muted,
+      tiles: tiles.filter((tile) => !tile.custom?.temporary), columns, muted, fullscreenCount,
     }));
-  }, [tiles, columns, muted]);
+  }, [tiles, columns, muted, fullscreenCount]);
   useEffect(() => {
     if (!notice) return;
     const timeout = setTimeout(() => setNotice(''), 2800);
@@ -301,6 +304,11 @@ function App() {
     } catch { setFullscreenFallback(true); }
   }
 
+  async function openFullscreen(count) {
+    setFullscreenCount(count);
+    if (!isFullscreen) await toggleFullscreen();
+  }
+
   async function openPiP() {
     if (pipWindow) { pipWindow.focus(); return; }
     if ('documentPictureInPicture' in window) {
@@ -322,7 +330,7 @@ function App() {
   }
 
   function Dashboard({ compact = false }) {
-    return <div ref={windowRef} className={`app-window ${compact ? 'compact-window' : ''} ${fullscreenFallback ? 'fullscreen-fallback' : ''} ${isFullscreen ? 'immersive' : ''}`} style={!compact ? { transform: `translate(${offset.x}px, ${offset.y}px)` } : undefined} onDoubleClick={isFullscreen ? toggleFullscreen : undefined}>
+    return <div ref={windowRef} className={`app-window ${compact ? 'compact-window' : ''} ${fullscreenFallback ? 'fullscreen-fallback' : ''} ${isFullscreen ? 'immersive' : ''}`} data-fullscreen-count={fullscreenCount} style={!compact ? { transform: `translate(${offset.x}px, ${offset.y}px)` } : undefined} onDoubleClick={isFullscreen ? toggleFullscreen : undefined}>
       <div className="window-bar" onPointerDown={!compact ? startPanelDrag : undefined} onPointerMove={!compact ? movePanel : undefined} onPointerUp={!compact ? stopPanelDrag : undefined}>
         <div className="window-dots"><i /><i /><i /></div>
         <span className="window-label"><Grip size={13} /> DRAG ME ANYWHERE</span>
@@ -348,12 +356,16 @@ function App() {
           <header className="workspace-header"><div className="breadcrumb">YOUR SPACE <span>/</span> THE WALL</div><div className="header-actions"><span className="saved-indicator"><Check size={13} /> Auto-saved</span><IconButton icon={RotateCcw} label="Reset wall" onClick={resetWall} /></div></header>
           <div className="workspace-content">
             <div className="hero-row"><div><div className="hero-kicker"><span className="hero-kicker-line" /> INFINITE SCROLL, FINITE SPACE</div><h1>More is <em>more.</em><span className="sparkle-inline">✳</span></h1><p>Your favorite brain candy, all in one place. Drag tiles around and make it yours.</p></div><div className="tile-count"><strong>{String(tiles.length).padStart(2, '0')}<span> / {MAX_TILES}</span></strong><small>VIDEOS ON YOUR WALL</small></div></div>
-            <div className="toolbar"><div className="toolbar-left"><span className="toolbar-label"><LayoutGrid size={16} /> YOUR WALL</span><span className="toolbar-separator" /><span className="video-count-pill">{tiles.length} {playing ? 'playing' : 'paused'}</span></div><div className="toolbar-right"><div className="layout-switch" aria-label="Grid columns">{[2, 3, 4].map((number) => <button key={number} type="button" className={columns === number ? 'selected' : ''} onClick={() => setColumns(number)} title={`${number} columns`} aria-label={`${number} columns`}>{number}</button>)}</div><IconButton icon={Shuffle} label="Shuffle tiles" onClick={shuffleTiles} disabled={tiles.length < 2} /><IconButton icon={playing ? Pause : Play} label={playing ? 'Pause all videos' : 'Play all videos'} onClick={() => setPlaying(!playing)} /><IconButton icon={muted ? VolumeX : Volume2} label={muted ? 'Unmute videos' : 'Mute videos'} onClick={() => setMuted(!muted)} active={!muted} />{!pipWindow && <button className="fullscreen-button" type="button" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'} title={isFullscreen ? 'Exit fullscreen (Esc)' : 'Enter fullscreen'}>{isFullscreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}<span>{isFullscreen ? 'Exit' : 'Fullscreen'}</span></button>}<button className="pip-button" type="button" onClick={openPiP}><MonitorPlay size={17} /><span>Pop out</span><ArrowUpRight size={14} /></button></div></div>
+            <div className="toolbar"><div className="toolbar-left"><span className="toolbar-label"><LayoutGrid size={16} /> YOUR WALL</span><span className="toolbar-separator" /><span className="video-count-pill">{tiles.length} {playing ? 'playing' : 'paused'}</span></div><div className="toolbar-right"><div className="layout-switch" aria-label="Grid columns">{[2, 3, 4].map((number) => <button key={number} type="button" className={columns === number ? 'selected' : ''} onClick={() => setColumns(number)} title={`${number} columns`} aria-label={`${number} columns`}>{number}</button>)}</div><IconButton icon={Shuffle} label="Shuffle tiles" onClick={shuffleTiles} disabled={tiles.length < 2} /><IconButton icon={playing ? Pause : Play} label={playing ? 'Pause all videos' : 'Play all videos'} onClick={() => setPlaying(!playing)} /><IconButton icon={muted ? VolumeX : Volume2} label={muted ? 'Unmute videos' : 'Mute videos'} onClick={() => setMuted(!muted)} active={!muted} />{!pipWindow && <div className="fullscreen-presets" role="group" aria-label="Fullscreen tile presets"><span><Maximize2 size={14} /> Fullscreen</span>{FULLSCREEN_PRESETS.map((count) => <button key={count} type="button" onClick={() => openFullscreen(count)} title={`Fullscreen with ${count} ${count === 1 ? 'tile' : 'tiles'}`} aria-label={`Fullscreen with ${count} ${count === 1 ? 'tile' : 'tiles'}`}>{count}</button>)}</div>}<button className="pip-button" type="button" onClick={openPiP}><MonitorPlay size={17} /><span>Pop out</span><ArrowUpRight size={14} /></button></div></div>
             {fullscreenTiles.length ? <div className="tile-grid" style={{ '--columns': columns }}>{fullscreenTiles.map((tile, index) => <Tile key={tile.uid} tile={tile} index={index} muted={muted} playing={playing} immersive={isFullscreen} onRemove={removeTile} onDuplicate={duplicateTile} onDragStart={dragStart} onDragOver={(event) => event.preventDefault()} onDrop={drop} />)}{!isFullscreen && tiles.length < MAX_TILES && <button type="button" className="empty-tile" onClick={() => setModalOpen(true)}><span><Plus size={23} /></span><strong>Room for more</strong><small>Add another video</small></button>}</div> : <div className="empty-wall"><div><Sparkles size={28} /></div><h2>Your wall is waiting.</h2><p>Pick a video from the library to get started.</p><button type="button" className="primary-button" onClick={() => addTile('sand')}><Plus size={17} /> Add a video</button></div>}
             <footer className="workspace-footer"><span><span className="footer-dot" /> ALL YOUR FAVES, ONE WINDOW</span><span>Drag the title bar to move this app <ArrowDownRight size={14} /></span></footer>
           </div>
         </main>
       </div>
+      {isFullscreen && <div className="fullscreen-overlay" role="group" aria-label="Fullscreen controls" onDoubleClick={(event) => event.stopPropagation()}>
+        {FULLSCREEN_PRESETS.map((count) => <button key={count} type="button" className={fullscreenCount === count ? 'selected' : ''} onClick={() => setFullscreenCount(count)} aria-label={`Show ${count} ${count === 1 ? 'tile' : 'tiles'}`} aria-pressed={fullscreenCount === count}>{count}</button>)}
+        <button type="button" className="fullscreen-exit" onClick={toggleFullscreen} aria-label="Exit fullscreen" title="Exit fullscreen (Esc)"><Minimize2 size={15} /><span>Exit</span></button>
+      </div>}
     </div>;
   }
 

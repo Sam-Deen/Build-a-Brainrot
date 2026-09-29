@@ -37,7 +37,7 @@ docker compose up -d
 Open <http://localhost:6969/>. To pull a newer `latest` image later, run
 `docker compose up -d --pull always`.
 
-Click **Fullscreen** to fill the screen. Escape or **Exit** leaves fullscreen. Click **Pop out** in Edge or Chrome to move the wall into a draggable, resizable picture-in-picture window that stays above other windows. Browsers without Document Picture-in-Picture open a regular pop-out window. The page window itself can also be dragged by its top bar.
+Choose **1**, **4**, **9**, or **12** beside Fullscreen to fill the screen with that many videos. The fullscreen controls let you switch counts or exit; Escape also leaves fullscreen. Fullscreen starts with the videos on your wall and temporarily fills any remaining spaces from the library. Your saved wall stays the same. Click **Pop out** in Edge or Chrome to move the wall into a draggable, resizable picture-in-picture window that stays above other windows. Browsers without Document Picture-in-Picture open a regular pop-out window. The page window itself can also be dragged by its top bar.
 
 YouTube tiles require an internet connection. Videos chosen from your computer stay available only until the tab is closed; linked videos and the layout persist.
 
