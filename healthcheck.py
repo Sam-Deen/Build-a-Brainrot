@@ -53,9 +53,9 @@ def settings(env):
               "failures": min(1000000, max(1, int(number("HEALTH_FAILURE_THRESHOLD", 1)))),
               "recoveries": min(1000000, max(1, int(number("HEALTH_RECOVERY_THRESHOLD", 1))))}
     for name, prefix, interval, stale, slow in (
-        ("application", "APPLICATION", 30000, 90000, 250),
-        ("assets", "ASSETS", 60000, 180000, 500),
-        ("bundledVideos", "VIDEOS", 300000, 900000, 1000),
+        ("application", "APPLICATION", 30000, 90000, 1500),
+        ("assets", "ASSETS", 60000, 180000, 1500),
+        ("bundledVideos", "VIDEOS", 300000, 900000, 1500),
     ):
         period = min(86400000, max(1000, number(f"HEALTH_{prefix}_PROBE_MS", interval)))
         config[name] = {"intervalMs": period, "staleAfterMs": max(

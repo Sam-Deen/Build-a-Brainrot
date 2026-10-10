@@ -61,7 +61,7 @@ times. An unavailable cache only loses continuity; a container restart resets it
 
 Configure `HEALTH_APPLICATION_PROBE_MS`, `HEALTH_ASSETS_PROBE_MS`, and
 `HEALTH_VIDEOS_PROBE_MS`; corresponding `*_STALE_MS` defaults are 90000, 180000,
-and 900000, and `*_SLOW_MS` defaults are 250, 500, and 1000. All are milliseconds.
+and 900000, and `*_SLOW_MS` defaults are 1500 for all components. All are milliseconds.
 `HEALTH_PROBE_TIMEOUT_MS` defaults to 1500 per request. Freshness is at least twice
 the interval plus two request timeouts and a five-second scheduling margin.
 Published component freshness allows at least 180 seconds for Docker/proxy

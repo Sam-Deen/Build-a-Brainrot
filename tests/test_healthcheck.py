@@ -113,12 +113,17 @@ class HealthcheckTests(unittest.TestCase):
         self.assertEqual(first["timestamp"], second["timestamp"])
         self.assertEqual(probe.call_count, 3)
 
-    @patch("healthcheck.probe", return_value=("operational", None, 300))
+    @patch("healthcheck.probe")
     def test_slow_success_degrades_and_records_success(self, probe):
-        report = healthcheck.measure(self.manifest, env={})
-        self.assertEqual(report["status"], "degraded")
-        self.assertTrue(report["coreAvailable"])
-        self.assertIsNotNone(report["components"]["application"]["lastSuccess"])
+        for latency, expected in ((1500, "operational"), (1501, "degraded")):
+            with self.subTest(latency=latency):
+                probe.return_value = ("operational", None, latency)
+                report = healthcheck.measure(self.manifest, env={})
+                self.assertEqual(report["status"], expected)
+                self.assertTrue(report["coreAvailable"])
+                for component in report["components"].values():
+                    self.assertEqual(component["status"], expected)
+                    self.assertIsNotNone(component["lastSuccess"])
 
     @patch("healthcheck.probe")
     def test_failure_threshold_and_recovery_keep_distinct_timestamps(self, probe):
