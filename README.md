@@ -40,7 +40,7 @@ Open <http://localhost:6969/>. To pull a newer `latest` image later, run
 ## Application health
 
 The image runs `/app/healthcheck.py` every 30 seconds. It prints one compact
-`application-health/v1` report, valid for 90 seconds, for Status Server's
+`application-health/v1` report, valid for 180 seconds, for Status Server's
 **Docker Container** monitors. Use a 60-second monitor interval and inspect it with
 `docker inspect --format '{{json .State.Health}}' YOUR_CONTAINER_NAME`.
 
@@ -50,6 +50,26 @@ first 64 bytes, catching missing files, incorrect content, and HTML fallbacks
 without downloading whole videos. `application` and `assets` are critical;
 their failure reports Down and exits 1. Missing bundled videos report Degraded
 and exit 0 because the app and other video sources remain available.
+
+Checks run without visitors: the entry page is measured every 30 seconds, assets
+every 60 seconds, and bundled videos every five minutes. Measurements and
+failure/recovery counters persist in `/dev/shm/brainrot-health.json` (memory,
+without disk writes). A file lock prevents concurrent healthcheck processes from
+probing together. Cached responses retain their original measurement timestamps.
+Each component reports attempt, success, failure, measurement, and status-change
+times. An unavailable cache only loses continuity; a container restart resets it.
+
+Configure `HEALTH_APPLICATION_PROBE_MS`, `HEALTH_ASSETS_PROBE_MS`, and
+`HEALTH_VIDEOS_PROBE_MS`; corresponding `*_STALE_MS` defaults are 90000, 180000,
+and 900000, and `*_SLOW_MS` defaults are 250, 500, and 1000. All are milliseconds.
+`HEALTH_PROBE_TIMEOUT_MS` defaults to 1500 per request. Freshness is at least twice
+the interval plus two request timeouts and a five-second scheduling margin.
+Published component freshness allows at least 180 seconds for Docker/proxy
+delivery; shorter local freshness limits are enforced before publishing.
+`HEALTH_FAILURE_THRESHOLD` and `HEALTH_RECOVERY_THRESHOLD` default to 1, preserving
+the existing immediate failure/recovery behavior. Slow successful checks report
+Degraded and retain core availability. Keep Docker's interval at or below the
+smallest component interval; its 10-second timeout must cover all probe batches.
 
 This image publishes JSON directly through Docker; there is no HTTP health
 endpoint. Browser playback, YouTube, fonts, and user-supplied video sources are
